@@ -1,1 +1,52 @@
+# Installer les packages nécessaires (si non installés)
+if (!require(data.table)) install.packages("data.table")
+if (!require(tidyr)) install.packages("tidyr")
+
+# Charger les bibliothèques
+library(data.table)
+library(tidyr)
+
+# Étape 1 : Définir les chemins de fichiers
+# Remplacez "votre_chemin" par le chemin où se trouvent vos fichiers.
+chemin_fichiers <- "votre_chemin/"  # Exemple : "C:/Users/VotreNom/Documents/datasets/"
+
+# Charger les fichiers
+ratings <- fread(paste0(chemin_fichiers, "Rating.csv"), stringsAsFactors = FALSE)
+tags <- fread(paste0(chemin_fichiers, "tag.csv"), stringsAsFactors = FALSE)
+movies <- fread(paste0(chemin_fichiers, "movie.csv"), stringsAsFactors = FALSE)
+links <- fread(paste0(chemin_fichiers, "link.csv"), stringsAsFactors = FALSE)
+genome_tags <- fread(paste0(chemin_fichiers, "genome_tags.csv"), stringsAsFactors = FALSE)
+genome_scores <- fread(paste0(chemin_fichiers, "genome_scores.csv"), stringsAsFactors = FALSE)
+
+# Étape 2 : Nettoyage des données
+
+# Nettoyer Rating.csv
+ratings$timestamp <- as.POSIXct(ratings$timestamp, format = "%m/%d/%Y %H:%M")
+ratings <- ratings[!duplicated(ratings), ]
+
+# Nettoyer movie.csv
+movies <- movies %>% separate_rows(genres, sep = "\\|")
+movies <- subset(movies, genres != "(no genres listed)")
+
+# Nettoyer tag.csv
+tags <- subset(tags, nchar(tag) > 2)
+tags$timestamp <- as.POSIXct(tags$timestamp, format = "%m/%d/%Y %H:%M")
+
+# Nettoyer genome_scores.csv
+genome_scores <- merge(genome_scores, genome_tags, by = "tagId")
+
+# Étape 3 : Sauvegarder les fichiers nettoyés
+write.csv(ratings, paste0(chemin_fichiers, "cleaned_ratings.csv"), row.names = FALSE)
+write.csv(tags, paste0(chemin_fichiers, "cleaned_tags.csv"), row.names = FALSE)
+write.csv(movies, paste0(chemin_fichiers, "cleaned_movies.csv"), row.names = FALSE)
+write.csv(genome_scores, paste0(chemin_fichiers, "cleaned_genome_scores.csv"), row.names = FALSE)
+write.csv(genome_tags, paste0(chemin_fichiers, "cleaned_genome_tags.csv"), row.names = FALSE)
+write.csv(links, paste0(chemin_fichiers, "cleaned_links.csv"), row.names = FALSE)
+
+# Étape 4 : Vérification
+cat("Nombre de lignes dans cleaned_ratings.csv :", nrow(ratings), "\n")
+cat("Nombre de lignes dans cleaned_tags.csv :", nrow(tags), "\n")
+cat("Nombre de lignes dans cleaned_movies.csv :", nrow(movies), "\n")
+cat("Nombre de lignes dans cleaned_genome_scores.csv :", nrow(genome_scores), "\n")
+cat("Nombre de lignes dans cleaned_links.csv :", nrow(links), "\n")
 
